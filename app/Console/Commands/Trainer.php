@@ -2,18 +2,18 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
+use App\Models\Wallet;
 
-class Market extends Command
+class Trainer extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'command:market {first=0}';
+    protected $signature = 'command:trainer';
 
     /**
      * The console command description.
@@ -27,7 +27,8 @@ class Market extends Command
      *
      * @return void
      */
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct();
     }
 
@@ -36,11 +37,12 @@ class Market extends Command
      *
      * @return int
      */
-    public function handle() {
-        $market = new \Binance\Market();
-        $market->fetch($this->argument('first'));
-
-        //Artisan::call('command:broker');
-        return 0;
+    public function handle()
+    {   
+        
+        foreach(Wallet::where("status", "=", "training")->get() as $wallet) {
+            \Binance\Trainer::run($wallet);
+        }
+        return false;
     }
 }

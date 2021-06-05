@@ -31,6 +31,7 @@
             "app/Helpers/Helpers.php",
             "app/Helpers/Binance.php",
             "app/Helpers/Market.php",
+            "app/Helpers/Trainer.php",
             "app/Helpers/Broker.php",
             "app/Helpers/Scenario.php"
         ]
