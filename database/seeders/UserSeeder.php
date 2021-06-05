@@ -23,7 +23,7 @@ class UserSeeder extends Seeder
             "username" => "jeppe",
             "email" => "jeppekristoffersen@hotmail.com",
             "phone" => "88888888",
-            "password" => Hash::make("jeppe1234")
+            "password" => Hash::make("superSecureCrypto==lawls")
         ));
 
         $jonas = User::create(array(
@@ -31,7 +31,7 @@ class UserSeeder extends Seeder
             "username" => "jonas",
             "email" => "jonaskristoffersen@hotmail.com",
             "phone" => "88888888",
-            "password" => Hash::make("jonas1234")
+            "password" => Hash::make("superSecureCrypto==lawls")
         ));
     }
 }

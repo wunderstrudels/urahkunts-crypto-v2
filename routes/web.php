@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AppController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -13,22 +15,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    $api = new \Binance\API(env("API_X_KEY"), env("API_X_SECRET"));
-
-    $prices = $api ->prices();
-    if($prices == null) {
-        return false;
-    }
-
-    foreach($prices as $key => $value) {
-        if(substr($key,  -4) != "USDC") {
-            continue;
-        }
 
 
-        echo $key . " : " . $value . "<br>";
-    }
+Route::get('{any}', [AppController::class, 'index'])->where('any', '^(?!api).*$');
 
-    //dd($data);
-});
+Route::post('/login', [AuthController::class, 'login']);
+Route::middleware('auth:api')->post('/refresh', [AuthController::class, 'refresh']);
+Route::middleware('auth:api')->post('/logout', [AuthController::class, 'logout']);

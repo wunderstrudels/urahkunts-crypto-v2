@@ -31,7 +31,7 @@ class WalletSeeder extends Seeder
         // Default
         $default = Wallet::create(array(
             "currency_id" => $currency->id,
-            "name" => "default",
+            "name" => "trainer",
             "amount" => 100
         ));
         $default->scenarios()->create(array(
