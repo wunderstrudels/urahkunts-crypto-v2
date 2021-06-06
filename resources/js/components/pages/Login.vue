@@ -21,6 +21,7 @@
         },
         methods: {
             submit() {
+                console.log("lulz");
                 this.$store.dispatch("user/login", {
                     'username': this.username,
                     'password': this.password

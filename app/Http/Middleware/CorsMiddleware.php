@@ -13,7 +13,7 @@ class CorsMiddleware {
      */
     public function handle($request, Closure $next) {
         $headers = [
-            'Access-Control-Allow-Origin'      => 'v2.johnbob.dk',
+            'Access-Control-Allow-Origin'      => env("APP_URL"),
             'Access-Control-Allow-Methods'     => 'POST, GET, OPTIONS, PUT, PATCH, DELETE',
             'Access-Control-Allow-Credentials' => 'true',
             'Access-Control-Max-Age'           => '86400',

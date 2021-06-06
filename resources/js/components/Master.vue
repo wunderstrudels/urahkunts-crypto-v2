@@ -1,12 +1,24 @@
 <template>
     <div id="master">
         <div id="header">
-            <span id="logo">URAHKUNTS-CRYPTO</span>
+            <span id="logo">URAHKUNTS-CRYPTO V2</span>
             <ul v-if="authenticated == true" id="navigation">
                 <li>
-                    <router-link to="/wallets">
+                    <router-link to="/" v-bind:class="{'active': route == 'dashboard'}">
+                        <i class="fa fa-tachometer" aria-hidden="true"></i>
+                        <span>Dashboard</span>
+                    </router-link>
+                </li>
+                <li>
+                    <router-link to="/wallets" v-bind:class="{'active': route == 'wallets'}">
                         <i class="fa fa-credit-card-alt" aria-hidden="true"></i>
                         <span>Wallets</span>
+                    </router-link>
+                </li>
+                <li>
+                    <router-link to="/graphs" v-bind:class="{'active': route == 'graphs'}">
+                        <i class="fa fa-bar-chart" aria-hidden="true"></i>
+                        <span>Graphs</span>
                     </router-link>
                 </li>
             </ul>
@@ -25,6 +37,9 @@
             };
         },
         computed: {
+            route() {
+                return (this.$route.name == null) ? "dashboard" : this.$route.name;
+            },
             authenticated() {
                 return this.$store.getters["user/authenticated"];
             }
@@ -33,7 +48,7 @@
 
         },
         mounted() {
-
+            console.log(this.$route.name);
         }
     }
 </script>
@@ -68,7 +83,7 @@
         position: absolute;
         top: 0px;
         left: 0px;
-        width: 300px;
+        width: 350px;
         height: 50px;
         line-height: 50px;
 
@@ -82,7 +97,7 @@
         float: left;
         width: 100%;
         height: 50px;
-        padding-left: 300px;
+        padding-left: 350px;
         list-style: none;
     }
 
@@ -105,6 +120,10 @@
         font-weight: bold;
         text-decoration: none;
         transition: background-color 0.2s linear;
+    }
+
+    #navigation > li > a.active {
+        background-color: rgb(240, 240, 240);
     }
 
     #navigation > li > a:hover {

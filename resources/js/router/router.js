@@ -11,7 +11,30 @@ const routes = [
             requiresAuth: true
         }
     },
-
+    {
+        path: "/wallets/:name?",
+        name: "wallets",
+        component: () => import('../components/pages/Wallets.vue'),
+        meta: {
+            requiresAuth: true
+        }
+    },
+    {
+        path: "/trainer/:scenario?",
+        name: "trainer",
+        component: () => import('../components/pages/Trainer.vue'),
+        meta: {
+            requiresAuth: true
+        }
+    },
+    {
+        path: "/graphs",
+        name: "graphs",
+        component: () => import('../components/pages/Graphs.vue'),
+        meta: {
+            requiresAuth: true
+        }
+    },
 
     // Public routes.
     {

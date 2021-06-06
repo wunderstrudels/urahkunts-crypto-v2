@@ -8,9 +8,8 @@ use Carbon\Carbon;
 
 class Trainer {
     public static function run($wallet) {
-        $day = Market::markets_saved()->where("currency_id", "=", $wallet->currency->id)->where('created_at', '>=', Carbon::parse('-360 minutes'))->get();
+        $day = Market::markets_saved()->where("currency_id", "=", $wallet->currency->id)->where('created_at', '>=', Carbon::parse('-720 minutes'))->get();
         $latest = (isset($day[0]) == true) ? $day[0] : null;
-
         foreach($wallet->scenarios as $scenario) {
             $status = $scenario->status;
 
@@ -26,10 +25,11 @@ class Trainer {
                 continue;
             }
 
-            
+            Log::debug("Training: {$scenario->name}");
             Transaction::where('scenario_id', '=', $scenario->id)->delete();
 
             $data = array();
+            $count = 0;
             foreach($day as $minute) {
                 array_push($data, $minute);
 
@@ -47,6 +47,7 @@ class Trainer {
                 }else {
                     self::sell($scenario, $data, $active, $latest);
                 }
+                $count++;
             }
 
 
@@ -56,7 +57,8 @@ class Trainer {
             }
             
             $scenario->status = "";
-            $scenario->save();            
+            $scenario->save();   
+            Log::debug("count: {$count}"); 
         }
     }
 
