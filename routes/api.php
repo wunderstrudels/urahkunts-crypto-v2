@@ -16,7 +16,10 @@ use Illuminate\Support\Facades\Route;
 require_once "api/graph.php";
 
 Route::middleware('auth:api')->group(function () {
-    //require_once "api/wallet.php";
+    require_once "api/currency.php";
+    require_once "api/wallet.php";
+    require_once "api/bot.php";
+    require_once "api/scenario.php";
 
 
     

@@ -2,8 +2,11 @@
 
 namespace Database\Seeders;
 
-use Database\Seeders\UserSeeder;
+
+use Database\Seeders\ScenarioSeeder;
+use Database\Seeders\CurrencySeeder;
 use Database\Seeders\WalletSeeder;
+use Database\Seeders\UserSeeder;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -17,7 +20,9 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             UserSeeder::class,
-            WalletSeeder::class,
+            CurrencySeeder::class,
+            ScenarioSeeder::class,
+            WalletSeeder::class
         ]);
     }
 }

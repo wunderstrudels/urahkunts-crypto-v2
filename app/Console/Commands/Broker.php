@@ -59,7 +59,7 @@ class Broker extends Command
                 $broker->train($wallet);
             }else if($wallet->status == "live") {
 
-                $m30 = Market::where("currency_id", "=", $wallet->currency->id)->latest()->get();
+                /* $m30 = Market::where("currency_id", "=", $wallet->currency->id)->latest()->get();
                 $m60 = Market::markets_saved()->where("currency_id", "=", $wallet->currency->id)->where('created_at', '>=', Carbon::parse('-60 minutes'))->latest()->get();
                 $data = array(
                     "30m" => ($m30 != null) ? $m30 : [],
@@ -68,7 +68,7 @@ class Broker extends Command
                 $current = (isset($m30[0]) == true) ? $m30[0] : null;
 
                 
-                $broker->live($wallet, $data, $current);
+                $broker->live($wallet, $data, $current); */
             }
         }
         return false;

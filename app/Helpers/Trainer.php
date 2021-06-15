@@ -1,140 +1,164 @@
 <?php
 namespace Binance;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
-use \App\Models\Transaction;
+use \App\Models\Currency;
 use \App\Models\Market;
 use Carbon\Carbon;
 
 
 class Trainer {
-    public static function run($wallet) {
-        $day = Market::markets_saved()->where("currency_id", "=", $wallet->currency->id)->where('created_at', '>=', Carbon::parse('-720 minutes'))->get();
-        $latest = (isset($day[0]) == true) ? $day[0] : null;
-        foreach($wallet->scenarios as $scenario) {
-            $status = $scenario->status;
+    private $latest = null;
+    private $data = array();
+    private $wallet = 100;
 
-            if($scenario->hash != "") {
-                Log::debug("already trained");
-                continue;
-            }
-            $scenario->hash = md5($scenario->name);
+    
+    private $active = null;
+    public $transactions = array();
 
 
-            if(self::validate($scenario) == false) {
-                Log::debug("could not validate");
-                continue;
-            }
+    public function __construct($scenario) {
 
-            Log::debug("Training: {$scenario->name}");
-            Transaction::where('scenario_id', '=', $scenario->id)->delete();
-
-            $data = array();
-            $count = 0;
-            foreach($day as $minute) {
-                array_push($data, $minute);
-
-                if(sizeof($data) < 60) {
-                    continue;
-                }
-                $latest = $minute;
-
-
-
-
-                $active = Transaction::active($scenario);
-                if($active == null) {
-                    self::buy($scenario, $data, $latest);
-                }else {
-                    self::sell($scenario, $data, $active, $latest);
-                }
-                $count++;
-            }
-
-
-            if($status != $scenario->status) {
-                $size = sizeof($scenario->transactions);
-                Log::debug("Wallet: {$scenario->wallet->name} Scenario: {$scenario->id}: {$size} \n");
-            }
-            
-            $scenario->status = "";
-            $scenario->save();   
-            Log::debug("count: {$count}"); 
-        }
-    }
-
-    private static function validate($scenario = null) {
-
-        // Buy.
-        $buy = "scenarios/"  . $scenario->name . "/buy.php";
-        if(file_exists($buy) == false) {
-            $scenario->status = "Could not find the scenario 'buy' file.";
+        // Validating.
+        if(file_exists("scenarios/" . $scenario->name) == false) {
+            Log::debug("Could not find folder 'scenarios/{$scenario->name}'.");
             return false;
         }
 
-        // Sell.
-        $sell = "scenarios/"  . $scenario->name . "/sell.php";
-        if(file_exists($sell) == false) {
-            $scenario->status = "Could not find the scenario 'sell' file.";
+        if(file_exists("scenarios/" . $scenario->name . "/buy.php") == false) {
+            Log::debug("Could not find file 'scenarios/{$scenario->name}/buy.php'.");
             return false;
         }
 
-        return true;
+        if(file_exists("scenarios/" . $scenario->name . "/sell.php") == false) {
+            Log::debug("Could not find file 'scenarios/{$scenario->name}/sell.php'.");
+            return false;
+        }
+
+
+
+        // Start the training.
+        $btc = Currency::where("short", "=", "btc")->first();
+        $this->data = $btc->market()->where('created_at', '>=', Carbon::parse('-1440 minutes'))->get();
+        $this->latest = (isset($this->data[0]) == true) ? $this->data[0] : null;
+
+
+        foreach($this->data as $minute) {
+            $this->latest = $minute;
+
+            if($this->active == null) {
+                $this->buy($scenario, $this->latest);
+            }else {
+                $this->sell($scenario, $this->active, $this->latest);
+            }
+        }
+
+        $this->save($scenario);
     }
 
 
-
-    private static function buy($scenario, $data, $latest) {
-        $buy = "scenarios/"  . $scenario->name . "/buy.php";
+    private function buy($scenario, $latest) {
+        $buy = "scenarios/" . $scenario->name . "/buy.php";
         $buy = include $buy;
 
-        if($buy($data, $latest) != true) {
+        if($buy($latest) == false) {
             return false;
         }
 
+        $this->active = array(
+            "id" => sizeof($this->transactions),
+            "wallet_id" => 1337,
+            "bot_id" => 1337,
+            "amount" => (isset($latest) != false) ? ($this->wallet / $latest->value) : 0,
+            "buy_id" => 1337,
+            "buy_value" => $latest->value,
+            "buy_price" => $this->wallet,
+            "sell_id" => null,
+            "sell_value" => 0,
+            "sell_price" => 0,
+            "sold_at" => null,
+            "status" => "selling",
+            "created_at" => $latest->created_at,
+            "updated_at" => $latest->created_at,
+        );
 
 
-        $scenario->wallet->amount = 100;
 
-        if($scenario->wallet->amount < 10) {
-            $scenario->status = " - Wallet is under minimum buy amount: {$scenario->wallet->amount}.";
-            return false;
-        }
-
-        $transaction = Transaction::create(array(
-            "wallet_id" => $scenario->wallet->id,
-            "scenario_id" => $scenario->id,
-            "amount" => (isset($latest) != false) ? ($scenario->wallet->amount / $latest->value) : 0,
-            "buy_price" => $scenario->wallet->amount,
-            "buy_value" => (isset($latest) != false) ? $latest->value : 0,
-            "status" => "selling"
-        ));
-        $transaction->created_at = $latest->created_at;
-        $transaction->save();
-
-        $scenario->wallet->amount = $scenario->wallet->amount - $transaction->buy_price;
-        $scenario->wallet->save();
-
-        $scenario->status = " - Just made a new transaction.";
+        array_push($this->transactions, $this->active);
     }
 
-    private static function sell($scenario, $data, $active, $latest) {
-        $sell = "scenarios/"  . $scenario->name . "/sell.php";
+
+
+    private function sell($scenario, $active, $latest) {
+        $sell = "scenarios/" . $scenario->name . "/sell.php";
         $sell = include $sell;
 
-        if($sell($data, $active, $latest) != true) {
+        if($sell($active, $latest) == false) {
             return false;
         }
 
-        $active->sell_price = (isset($latest) != false) ? ($latest->value * $active->amount) : 0;
-        $active->sell_value = (isset($latest) != false) ? $latest->value : 0;
-        $active->sold_at = $latest->created_at;
-        $active->status = "sold";
-        $active->save();
+        $id = $active["id"];
+        $this->transactions[$id]["sell_id"] = 1337;
+        $this->transactions[$id]["sell_value"] = $latest->value;
+        $this->transactions[$id]["sell_price"] = (isset($latest) != false) ? ($latest->value * $this->wallet) : 0;
+        $this->transactions[$id]["sold_at"] = $latest->created_at;
+        $this->transactions[$id]["status"] = "sold";
+
+        $this->active = null;
+    }
+
+    private function save($scenario) {
+
+
+        // Graph
+        $output = array(
+            "labels" => array(),
+            "values" => array()
+        );
+        foreach($this->data as $minute) {
+            
+            array_push($output["values"], $minute->value);
+
+            // Labels
+            $timestamp = strtotime($minute->created_at);
+            $time = date('H:i:s', $timestamp);
+            array_push($output["labels"], $time);
+        }
 
         
-        $scenario->wallet->amount = $scenario->wallet->amount + $active->sell_price;
-        $scenario->wallet->save();
 
-        $scenario->status = " - Just made a new sale.";
+        // Transactions
+        $points = array();
+        foreach($this->transactions as $transaction) {
+            // Bought at
+            $timestamp = strtotime($transaction["created_at"]);
+            $bought = date('H:i:s', $timestamp);
+            $color = "#000000";
+
+            array_push($points, array(
+                "buy_time" => $bought,
+                "buy_value" => $transaction["buy_value"],
+                "label" => "Buy",
+                "color" => $color
+            ));
+
+            if($transaction["status"] == "sold") {
+                // Sold at
+                $timestamp = strtotime($transaction["sold_at"]);
+                $sold = date('H:i:s', $timestamp);
+
+                array_push($points, array(
+                    "sell_time" => $sold,
+                    "sell_value" => $transaction["sell_value"],
+                    "label" => "Sold",
+                    "color" => $color
+                ));
+            }
+        }
+        $output["points"] = $points;
+
+
+
+        file_put_contents("scenarios/" . $scenario->name . "/data.json", json_encode($output));
     }
 }

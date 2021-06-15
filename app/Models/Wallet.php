@@ -25,8 +25,8 @@ class Wallet extends Model {
     	return $this->belongsTo("App\Models\Currency");
     }
 
-    public function scenarios() {
-        return $this->hasMany("App\Models\Scenario");
+    public function bots() {
+        return $this->hasMany("App\Models\Bot");
     }
 
     public function transactions() {

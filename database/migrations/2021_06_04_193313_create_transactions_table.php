@@ -20,8 +20,8 @@ class CreateTransactionsTable extends Migration
             // Relations
             $table->unsignedBigInteger('wallet_id');
             $table->foreign('wallet_id')->references('id')->on('wallets');
-            $table->unsignedBigInteger('scenario_id');
-            $table->foreign('scenario_id')->references('id')->on('scenarios');
+            $table->unsignedBigInteger('bot_id');
+            $table->foreign('bot_id')->references('id')->on('bots');
 
 
             // Default

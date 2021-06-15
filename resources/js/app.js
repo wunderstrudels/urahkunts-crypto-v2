@@ -26,8 +26,7 @@
      axios.defaults.headers.common["Authorization"] = "Bearer " + store.getters["user/auth"].access_token;
  
      store.dispatch("user/read").then(() => {
-         console.log("tester");
-         router.push(window.path);
+        router.push(window.path);
      });
  }
  
@@ -74,3 +73,36 @@
      store: store
  });
  
+
+
+
+
+
+
+
+
+
+
+
+
+
+ // Helpers.
+ window.helpers = {
+    date: (hours = 0, days = 0, months = 0, years = 0) => {
+        const now = new Date();
+
+        const output = new Date();
+        output.setFullYear(now.getFullYear() + years);
+        output.setMonth(now.getMonth() + (months + 1));
+        output.setDate(now.getDate() + days);
+        output.setHours(now.getHours() + hours);
+
+        let month = ("0" + output.getMonth()).slice(-2);
+        let date = ("0" + output.getDate()).slice(-2);
+        let hour = ("0" + output.getHours()).slice(-2);
+        let minute = ("0" + output.getMinutes()).slice(-2);
+        let second = ("0" + output.getSeconds()).slice(-2);
+
+        return `${output.getFullYear()}-${month}-${date} ${hour}:${minute}:${second}`;
+    }
+ };

@@ -10,6 +10,12 @@
                     </router-link>
                 </li>
                 <li>
+                    <router-link to="/scenarios" v-bind:class="{'active': route == 'scenarios'}">
+                        <i class="fa fa-flask" aria-hidden="true"></i>
+                        <span>Scenarios</span>
+                    </router-link>
+                </li>
+                <li>
                     <router-link to="/wallets" v-bind:class="{'active': route == 'wallets'}">
                         <i class="fa fa-credit-card-alt" aria-hidden="true"></i>
                         <span>Wallets</span>

@@ -15,12 +15,8 @@ class CreateScenariosTable extends Migration
     {
         Schema::create('scenarios', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('wallet_id');
-            $table->foreign('wallet_id')->references('id')->on('wallets');
-            $table->string("name");
-            $table->string('color')->default("#000000");
-            $table->string('status')->default("");
-            $table->string('hash')->default("");
+            $table->string("name")->unique();
+            $table->timestamp('trained_at')->nullable();
             $table->timestamps();
         });
     }

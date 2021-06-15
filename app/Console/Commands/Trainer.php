@@ -3,9 +3,10 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
-use App\Models\Wallet;
+use App\Models\Scenario;
+use Carbon\Carbon;
 
+use Illuminate\Support\Facades\Log;
 class Trainer extends Command
 {
     /**
@@ -40,8 +41,10 @@ class Trainer extends Command
     public function handle()
     {   
         
-        foreach(Wallet::where("status", "=", "training")->get() as $wallet) {
-            \Binance\Trainer::run($wallet);
+        foreach(Scenario::where("trained_at", "=", null)->get() as $scenario) {
+            $trained = new \Binance\Trainer($scenario);
+            $scenario->trained_at = Carbon::now();
+            $scenario->save();
         }
         return false;
     }

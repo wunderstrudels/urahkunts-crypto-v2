@@ -37,6 +37,9 @@ export default {
 
 					context.commit("data", response.data.user);
 					context.commit("auth", response.data.auth);
+					
+					axios.defaults.headers.common["Authorization"] = "Bearer " + response.data.auth.access_token;
+
 					localStorage.setItem("auth", JSON.stringify(response.data.auth));
 
 					context.commit("authenticated", true);

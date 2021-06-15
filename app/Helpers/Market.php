@@ -27,27 +27,51 @@ class Market {
                 "short" => str_replace("USDC", "", $key)
             ));
 
-            $last = Table::where("currency_id", "=", $currency->id)->latest()->first();
-            Table::create(array(
-                "currency_id" => $currency->id,
-                "value" => $value,
-                "value_difference" => ($last != null) ? $last->value - $value : 0,
-                "percent_difference" => ($last != null) ? \Math::percentageFrom($last->value, $value) : 0
-            ));
+            $last = $currency->market->last();
+            if($first == true) {
+                $currency->market()->where("saved", "=", false)->where('created_at', '<=', Carbon::parse('-1440 minutes'))->delete();
+
+                $currency->market()->create(array(
+                    "currency_id" => $currency->id,
+                    "value" => $value,
+                    "value_difference" => ($last != null) ? \Helpers::number((double)$value - (double)$last->value) : 0,
+                    "percent_difference" => ($last != null) ? \Helpers::number(\Math::percentageFrom((double)$last->value, (double)$value)) : 0,
+                    "saved" => true
+                ));
+            }else {
+                $currency->market()->create(array(
+                    "currency_id" => $currency->id,
+                    "value" => $value,
+                    "value_difference" => ($last != null) ? \Helpers::number((double)$value - (double)$last->value) : 0,
+                    "percent_difference" => ($last != null) ? \Helpers::number(\Math::percentageFrom((double)$last->value, (double)$value)) : 0
+                ));
+            }
 
 
 
 
             
-            if($first == true) {
-                Table::where('created_at', '<=', Carbon::parse('-30 minutes'))->delete();
-                DB::connection("market")->table('markets_saved')->insert(array(
+
+
+
+            // High / low
+            $current = Table::high_low($currency->id)->whereDate('created_at', '>=', Carbon::now()->startOfDay())->whereDate('created_at', '<=', Carbon::now()->endOfDay())->first();
+            $time = Carbon::now();
+
+            if($current == null) {
+                Table::high_low($currency->id)->insert(array(
                     "currency_id" => $currency->id,
-                    "value" => $value,
-                    "value_difference" => ($last != null) ? $last->value - $value : 0,
-                    "percent_difference" => ($last != null) ? \Math::percentageFrom($last->value, $value) : 0,
-                    "created_at" => Carbon::now(),
-                    "updated_at" => Carbon::now()
+                    "high" => $value,
+                    "low" => $value,
+                    "value_difference" => 0,
+                    "percent_difference" => 0,
+                    "created_at" => $time,
+                    "updated_at" => $time
+                ));
+            } else {
+                Table::high_low($currency->id)->where("id", "=", $current->id)->update(array(
+                    "high" => ($value > $current->high) ? $value : $current->high,
+                    "low" => ($value < $current->low) ? $value : $current->low
                 ));
             }
         }

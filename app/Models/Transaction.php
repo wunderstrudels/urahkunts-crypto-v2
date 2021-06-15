@@ -46,7 +46,7 @@ class Transaction extends Model {
     	return $this->belongsTo("App\Models\Wallet");
     }
 
-    public function scenario() {
-    	return $this->belongsTo("App\Models\Scenario");
+    public function bot() {
+    	return $this->belongsTo("App\Models\Bot");
     }
 }

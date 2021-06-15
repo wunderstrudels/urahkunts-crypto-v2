@@ -20,9 +20,9 @@ const routes = [
         }
     },
     {
-        path: "/trainer/:scenario?",
-        name: "trainer",
-        component: () => import('../components/pages/Trainer.vue'),
+        path: "/scenarios/:scenario?",
+        name: "scenarios",
+        component: () => import('../components/pages/Scenarios.vue'),
         meta: {
             requiresAuth: true
         }

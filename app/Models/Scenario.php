@@ -14,19 +14,13 @@ class Scenario extends Model {
      * @var array
      */
     protected $fillable = [
-        'wallet_id',
         'name',
-        'color',
-        'status',
+        'trained_at'
     ];
 
 
     // Relations.
-    public function wallet() {
-    	return $this->belongsTo("App\Models\Wallet");
-    }
-    
-    public function transactions() {
-    	return $this->hasMany("App\Models\Transaction");
+    public function bot() {
+    	return $this->belongsTo("App\Models\Bot");
     }
 }

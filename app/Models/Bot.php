@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Currency extends Model {
+class Bot extends Model {
     use HasFactory;
 
     /**
@@ -14,17 +14,24 @@ class Currency extends Model {
      * @var array
      */
     protected $fillable = [
+        'wallet_id',
+        'scenario_id',
         'name',
-        'short'
+        'color',
+        'status',
     ];
 
 
     // Relations.
     public function wallet() {
-        return $this->hasMany("App\Models\Wallet");
+    	return $this->belongsTo("App\Models\Wallet");
     }
 
-    public function market() {
-        return $this->hasMany("App\Models\Market");
+    public function scenario() {
+    	return $this->hasOne("App\Models\Scenario");
+    }
+    
+    public function transactions() {
+    	return $this->hasMany("App\Models\Transaction");
     }
 }
