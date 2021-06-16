@@ -41,10 +41,19 @@ class Trainer extends Command
     public function handle()
     {   
         
-        foreach(Scenario::where("trained_at", "=", null)->get() as $scenario) {
-            $trained = new \Binance\Trainer($scenario);
-            $scenario->trained_at = Carbon::now();
+        foreach(Scenario::where("status", "=", null)->get() as $scenario) {
+            $start = microtime(true);
+            
+            $scenario->status = "training";
             $scenario->save();
+
+            $trained = new \Binance\Trainer($scenario);
+
+            $scenario->status = "trained";
+            $scenario->save();
+
+            $end = number_format(microtime(true) - $start, 1);
+            Log::debug("Trained scenario: {$scenario->name} in {$end}s.");
         }
         return false;
     }

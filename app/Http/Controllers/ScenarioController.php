@@ -31,7 +31,7 @@ class ScenarioController extends Controller {
         
        /*  $scenario = Scenario::where("id", "=", $id)->orWhere("name", "=", $id)->first();
 
-        $scenario->trained_at = null;
+        $scenario->status = null;
         $scenario->save();
 
         Artisan::call('command:trainer'); */
@@ -109,7 +109,7 @@ class ScenarioController extends Controller {
         file_put_contents($sell, $request->sell);
         unlink($data);
         
-        $scenario->trained_at = null;
+        $scenario->status = null;
         $scenario->save();
 
 

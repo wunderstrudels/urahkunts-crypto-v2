@@ -5,6 +5,7 @@
  */
 
  require('./bootstrap');
+ import VueApexCharts from 'vue-apexcharts';
  import VueRouter from 'vue-router';
  import Vuex from 'vuex';
  
@@ -13,6 +14,7 @@
  
  
  window.Vue = require('vue').default;
+ window.Vue.use(VueApexCharts);
  window.Vue.use(VueRouter);
  
  
@@ -43,6 +45,27 @@
  // files.keys().map(key => Vue.component(key.split('/').pop().split('.')[0], files(key).default))
  
  Vue.component('master', require('./components/Master.vue').default);
+ Vue.component('graph', VueApexCharts);
+
+
+// Lazy-load all snippets.
+const snippets = require.context('./components/snippets/', true, /\.vue$/i)
+snippets.keys().map((file) => {
+	file = file.replace("./", "");
+	let filename = file.replace(".vue", "");
+	Vue.component('' + filename, () => import('./components/snippets/' + file));
+});
+
+
+
+
+
+
+
+
+
+
+
  
  /**
   * Next, we will create a fresh Vue application instance and attach it to

@@ -20,7 +20,7 @@ class CreateWalletsTable extends Migration
             $table->string('name')->unique();
             $table->string('amount')->default("");
             $table->integer('timeout')->default(30);
-            $table->string('status')->default("training");
+            $table->string('status')->default("paused");
             $table->timestamps();
         });
     }

@@ -40,7 +40,7 @@ class Market extends Command
         $market = new \Binance\Market();
         $market->fetch($this->argument('first'));
 
-        //Artisan::call('command:broker');
+        Artisan::call('command:broker');
         return 0;
     }
 }

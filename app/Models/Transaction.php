@@ -15,7 +15,7 @@ class Transaction extends Model {
      */
     protected $fillable = [
         'wallet_id',
-        'scenario_id',
+        'bot_id',
         'amount',
         'buy_id',
         'buy_value',
@@ -24,20 +24,20 @@ class Transaction extends Model {
         'sell_value',
         'sell_price',
         'sold_at',
-        'status'
+        'status',
+        'created_at',
+        'updated_at'
     ];
 
 
 
 
-    public static function active($scenario) {
+    /* public static function active($scenario) {
         return Transaction::where(array(
             "scenario_id" => $scenario->id,
             "status" => "selling"
         ))->first();
-    }
-
-
+    } */
 
 
 

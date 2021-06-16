@@ -22,13 +22,19 @@ class Bot extends Model {
     ];
 
 
+    public function active() {
+    	return $this->transactions->where("status", "=", "selling")->first();
+    }
+    
+
+
     // Relations.
     public function wallet() {
     	return $this->belongsTo("App\Models\Wallet");
     }
 
     public function scenario() {
-    	return $this->hasOne("App\Models\Scenario");
+    	return $this->belongsTo("App\Models\Scenario");
     }
     
     public function transactions() {

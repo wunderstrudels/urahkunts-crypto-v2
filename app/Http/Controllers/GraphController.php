@@ -18,7 +18,7 @@ class GraphController extends Controller {
 
 
 
-    public function read(Request $request, $short) {
+    public function read(Request $request, $id) {
         $output = array(
             "labels" => array(),
             "values" => array()
@@ -26,22 +26,35 @@ class GraphController extends Controller {
 
 
         
-        $currency = Currency::where("short", "=", $short)->first();
+        $currency = Currency::where("id", "=", $id)->orWhere("short", "=", $id)->first();
         if($currency == null) {
-            return response()->json(array("error" => "Could not find currency: " . $short), 404);
+            return response()->json(array("error" => "Could not find currency: " . $id), 404);
         }
 
         
-        $market = $currency->market()->where('created_at', '>=', Carbon::parse('-1440 minutes'))->get();
+        $market = $currency->market()->where("saved", "=", true)->where('created_at', '>=', Carbon::parse('-1440 minutes'))->where('created_at', '<=', Carbon::parse('-30 minutes'))->get();
         foreach($market as $item) {
             
             array_push($output["values"], $item->value);
 
             // Labels
             $timestamp = strtotime($item->created_at);
-            $time = date('H:i:s', $timestamp);
+            $time = date('H:i', $timestamp);
             array_push($output["labels"], $time);
         }
+
+        $market = $currency->market()->where('created_at', '>=', Carbon::parse('-30 minutes'))->get();
+        foreach($market as $item) {
+            
+            array_push($output["values"], $item->value);
+
+            // Labels
+            $timestamp = strtotime($item->created_at);
+            $time = date('H:i', $timestamp);
+            array_push($output["labels"], $time);
+        }
+
+
         //dd($output);
 
 
@@ -70,7 +83,52 @@ class GraphController extends Controller {
     }
     
 
+    
+    public function transactions(Request $request, $id) {
+        $wallet = Wallet::where("id", "=", $id)->orWhere("name", "=", $id)->first();
 
+
+        $output = array(
+            "points" => array()
+        );
+
+        
+        $points = array();
+        foreach($wallet->bots as $bot) {
+            foreach($bot->transactions->where('created_at', '>=', Carbon::parse('-1440 minutes')) as $transaction) {
+                // Bought at
+                $timestamp = strtotime($transaction->created_at);
+                $bought = date('H:i', $timestamp);
+                $color = $bot->color;
+
+                array_push($points, array(
+                    "buy_time" => $bought,
+                    "buy_value" => $transaction->buy_value,
+                    "label" => "Buy",
+                    "color" => $color
+                ));
+
+                if($transaction->status == "sold") {
+                    // Sold at
+                    $timestamp = strtotime($transaction->sold_at);
+                    $sold = date('H:i', $timestamp);
+
+                    array_push($points, array(
+                        "sell_time" => $sold,
+                        "sell_value" => $transaction->sell_value,
+                        "label" => "Sold",
+                        "color" => $color
+                    ));
+                }
+            }
+        }
+        $output["points"] = $points;
+
+
+
+
+        return response()->json(array("transactions" => $output));
+    }
 
 
     

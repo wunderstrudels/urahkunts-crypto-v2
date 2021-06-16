@@ -12,7 +12,7 @@ const routes = [
         }
     },
     {
-        path: "/wallets/:name?",
+        path: "/wallets/:wallet?",
         name: "wallets",
         component: () => import('../components/pages/Wallets.vue'),
         meta: {

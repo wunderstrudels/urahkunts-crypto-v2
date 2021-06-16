@@ -9,24 +9,6 @@
         <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <script>
-            window.Promise ||
-                document.write(
-                '<script src="https://cdn.jsdelivr.net/npm/promise-polyfill@8/dist/polyfill.min.js"><\/script>'
-                )
-            window.Promise ||
-                document.write(
-                '<script src="https://cdn.jsdelivr.net/npm/eligrey-classlist-js-polyfill@1.2.20171210/classList.min.js"><\/script>'
-                )
-            window.Promise ||
-                document.write(
-                '<script src="https://cdn.jsdelivr.net/npm/findindex_polyfill_mdn"><\/script>'
-                )
-            </script>
-
-        <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-        <script src="https://cdn.jsdelivr.net/npm/vue-apexcharts"></script>
         <script src="https://use.fontawesome.com/93cf33b3bf.js"></script>
     </head>
     <body>

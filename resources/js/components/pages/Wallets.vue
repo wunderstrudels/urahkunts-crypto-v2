@@ -1,31 +1,30 @@
 <template>
-    <div id="scenarios">
-        <div id="scenario-list">
+    <div id="wallets">
+        <div id="wallet-list">
             <ul>
-                <li v-for="scenario in scenarios" v-bind:key="scenario.id" v-on:click="selectScenario(scenario.name)">
-                    <i class="fa fa-flask" aria-hidden="true"></i>
-                    <span>{{ scenario.name }}</span>
+                <li v-for="wallet in wallets" v-bind:key="wallet.id" v-on:click="selectWallet(wallet)">
+                    <i class="fa fa-credit-card-alt" aria-hidden="true"></i>
+                    <span>{{ wallet.name }}</span>
                 </li>
             </ul>
         </div>
-        <div v-if="active != null" id="scenario-content">
+        <div v-if="active != null" id="wallet-content">
             <div id="tabs">
                 <span v-on:click="selectTab('graph')" v-bind:class="{'active': tab == 'graph'}">Graph</span>
-                <span v-on:click="selectTab('code')" v-bind:class="{'active': tab == 'code'}">Code</span>
+                <span v-on:click="selectTab('bots')" v-bind:class="{'active': tab == 'bots'}">Bots</span>
             </div>
 
             <!-- GRAPH -->
-            <div v-show="tab == 'graph'">
-                graph
+            <div v-show="tab == 'graph'" class="tab">
+                <chart v-bind:data.sync="graph"/>
             </div>
 
             <!-- BOTS -->
-            <div v-show="tab == 'code'">
-                code
+            <div v-show="tab == 'bots'" class="tab">
+                bots
             </div>
-            <div id="training-overlay">Scenario is training.</div>
         </div>
-        <div v-if="active == null" id="no-active">Select a scenario</div>
+        <div v-if="active == null" id="no-active">Select a wallet</div>
     </div>
 </template>
 
@@ -34,27 +33,166 @@
         data() {
             return {
                 tab: "graph",
-                active: null
+                active: null,
+                wallet: null,
+                graph: {
+                    series: [],
+                    labels: [],
+                    annotations: {
+                        points: []
+                    }
+                }
             };
         },
         computed: {
-            scenarios() {
-                return this.$store.getters["scenario/list"];
+            test() {
+                return this.graph;
+            },
+            wallets() {
+                return this.$store.getters["wallet/list"];
             }
         },
         methods: {
             selectTab(tab) {
                 this.tab = tab;
             },
-            selectScenario(scenario) {
-                this.active = scenario;
+            selectWallet(wallet) {
+                
+                if(this.active != null && wallet.name == this.active.name) {
+                    return false;
+                }
+
+                this.active = wallet;
+                this.$router.push("/wallets/" + this.active.name);
+
+                (async () => {
+                    this.graph.render = false;
+
+                    await this.$store.dispatch("graph/read", {
+                        id: this.active.currency_id
+                    }).then((response) => {
+                        this.graph.series = [{
+                            name: "Values",
+                            data: response.graph.values
+                        }];
+                        this.graph.labels = response.graph.labels;
+                    });
+
+
+
+
+                    await this.$store.dispatch("graph/transactions", {
+                        id: this.active.id
+                    }).then((response) => {
+
+                        let annotations = {};
+                        annotations.points = [];
+                        for(let point in response.transactions.points) {
+                            let item = response.transactions.points[point];
+                            if(item.label == "Buy") {
+                                annotations.points.push({
+                                    x: item.buy_time,
+                                    y: item.buy_value,
+                                    marker: {
+                                        size: 8,
+                                        fillColor: '#fff',
+                                        strokeColor: item.color,
+                                        radius: 2,
+                                        cssClass: 'apexcharts-custom-class'
+                                    },
+                                    label: {
+                                        borderColor: item.color,
+                                        offsetY: 0,
+                                        style: {
+                                            color: '#fff',
+                                            background: item.color,
+                                        },
+                                        text: item.label,
+                                    }
+                                });
+                            }else {
+                                annotations.points.push({
+                                    x: item.sell_time,
+                                    y: item.sell_value,
+                                    marker: {
+                                        size: 8,
+                                        fillColor: '#fff',
+                                        strokeColor: item.color,
+                                        radius: 2,
+                                        cssClass: 'apexcharts-custom-class'
+                                    },
+                                    label: {
+                                        borderColor: item.color,
+                                        offsetY: 0,
+                                        style: {
+                                            color: '#fff',
+                                            background: item.color,
+                                        },
+                                        text: item.label,
+                                    }
+                                });
+                            }
+                        }
+
+                        this.graph.annotations.points = annotations.points;
+                    });
+
+
+
+
+
+
+
+                    this.graph.update();
+/* 
+                    console.log("test2");
+                    this.graph.options.annotations.points.push({
+                        x: "21:53:25",
+                        y: "39859.75000000",
+                        marker: {
+                            size: 8,
+                            fillColor: '#fff',
+                            strokeColor: "#00000",
+                            radius: 2,
+                            cssClass: 'apexcharts-custom-class'
+                        },
+                        label: {
+                            borderColor: "#00000",
+                            offsetY: 0,
+                            style: {
+                                color: '#fff',
+                                background: "#00000",
+                            },
+                            text: "buy",
+                        }
+                    }); */
+
+                    this.graph.render = true;
+                })();
+
+                /* this.$store.dispatch("graph/read", {
+                    id: this.active.currency_id
+                }).then((response) => {
+                    this.graph.series = [{
+                        name: "Values",
+                        data: response.graph.values
+                    }];
+                    this.graph.options.labels = response.graph.labels;
+                    
+
+                    this.graph.render = true;
+                }); */
+
+
             }
         },
         mounted() {
-            this.$store.dispatch("scenario/list");
+            this.$store.dispatch("wallet/list");
 
-            if(this.$route.params.scenario != undefined) {
-                this.select(this.$route.params.scenario);
+            if(this.$route.params.wallet != undefined) {
+                this.$store.dispatch("wallet/read", this.$route.params.wallet).then((response) => {
+                    this.selectWallet(response);
+                });
             }
         }
     }
@@ -62,7 +200,7 @@
 <style scoped lang="scss">
     @import './resources/sass/variables';
 
-    #scenarios {
+    #wallets {
         position: relative;
         float: left;
         width: 100%;
@@ -71,7 +209,7 @@
     }
 
 
-    #scenario-list {
+    #wallet-list {
         position: absolute;
         top: 0px;
         left: 0px;
@@ -81,7 +219,7 @@
         border-right: 1px solid rgb(235, 235, 235);
     }
 
-    #scenario-list > ul {
+    #wallet-list > ul {
         width: 100%;
         height: auto;
         padding: 0px;
@@ -89,7 +227,7 @@
         list-style: none;
     }
 
-    #scenario-list li {
+    #wallet-list li {
         position: relative;
         float: left;
         width: 100%;
@@ -99,18 +237,18 @@
         transition: background-color 0.2s linear;
     }
 
-    #scenario-list li:hover {
+    #wallet-list li:hover {
         background-color: rgb(235, 235, 235);
     }
 
-    #scenario-list li > i {
+    #wallet-list li > i {
         position: absolute;
         width: auto;
         height: 40px;
         line-height: 40px;
     }
 
-    #scenario-list li > span {
+    #wallet-list li > span {
         position: relative;
         float: left;
         width: 100%;
@@ -123,7 +261,7 @@
 
     
 
-    #scenario-content {
+    #wallet-content {
         position: relative;
         float: left;
         width: 100%;
@@ -132,7 +270,7 @@
         z-index: 1;
     }
 
-    #scenario-content > #tabs {
+    #wallet-content > #tabs {
         position: absolute;
         top: 0px;
         left: 0px;
@@ -141,7 +279,7 @@
         border-bottom: 1px solid rgb(245, 245, 245);
     }
 
-    #scenario-content > #tabs > span {
+    #wallet-content > #tabs > span {
         position: relative;
         float: left;
         width: auto;
@@ -157,11 +295,11 @@
         transition: background-color 0.2s linear;
     }
 
-    #scenario-content > #tabs > span:hover {
+    #wallet-content > #tabs > span:hover {
         background-color: rgb(245, 245, 245);
     }
 
-    #scenario-content > #tabs > span.active {
+    #wallet-content > #tabs > span.active {
         background-color: rgb(245, 245, 245);
     }
 

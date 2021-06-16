@@ -15,12 +15,12 @@ class Scenario extends Model {
      */
     protected $fillable = [
         'name',
-        'trained_at'
+        'status'
     ];
 
 
     // Relations.
     public function bot() {
-    	return $this->belongsTo("App\Models\Bot");
+    	return $this->hasMany("App\Models\Bot");
     }
 }

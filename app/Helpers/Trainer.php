@@ -11,6 +11,10 @@ class Trainer {
     private $latest = null;
     private $data = array();
     private $wallet = 100;
+    private $currency = null;
+    private $current = array(
+        "currency" => null
+    );
 
     
     private $active = null;
@@ -38,12 +42,19 @@ class Trainer {
 
 
         // Start the training.
-        $btc = Currency::where("short", "=", "btc")->first();
-        $this->data = $btc->market()->where('created_at', '>=', Carbon::parse('-1440 minutes'))->get();
+        //$this->currency = Currency::where("short", "=", "btc")->first();
+        $this->current["currency"] = Currency::where("short", "=", "btc")->first();
+        //$this->data = $this->currency->market()->where("saved", "=", true)->where('created_at', '>=', Carbon::parse('-1440 minutes'))->get();
+        $this->data = $this->current["currency"]->market()->where('created_at', '>=', Carbon::parse('-1440 minutes'))->get();
         $this->latest = (isset($this->data[0]) == true) ? $this->data[0] : null;
 
-
+        $count = 0;
         foreach($this->data as $minute) {
+
+            $count++;
+            if($count < 30) {
+                continue;
+            }
             $this->latest = $minute;
 
             if($this->active == null) {
@@ -51,6 +62,8 @@ class Trainer {
             }else {
                 $this->sell($scenario, $this->active, $this->latest);
             }
+
+            //usleep(20000);
         }
 
         $this->save($scenario);
@@ -61,7 +74,7 @@ class Trainer {
         $buy = "scenarios/" . $scenario->name . "/buy.php";
         $buy = include $buy;
 
-        if($buy($latest) == false) {
+        if($buy($latest) !== true) {
             return false;
         }
 
@@ -93,7 +106,9 @@ class Trainer {
         $sell = "scenarios/" . $scenario->name . "/sell.php";
         $sell = include $sell;
 
-        if($sell($active, $latest) == false) {
+
+        $transaction = new FakeTransaction($active);
+        if($sell($transaction, $latest) !== true) {
             return false;
         }
 
@@ -160,5 +175,40 @@ class Trainer {
 
 
         file_put_contents("scenarios/" . $scenario->name . "/data.json", json_encode($output));
+    }
+}
+
+
+class FakeTransaction {
+    public $id;
+    public $wallet_id;
+    public $bot_id;
+    public $amount;
+    public $buy_id;
+    public $buy_value;
+    public $buy_price;
+    public $sell_id;
+    public $sell_value;
+    public $sell_price;
+    public $sold_at;
+    public $status;
+    public $created_at;
+    public $updated_at;
+
+    public function __construct($active) {
+        $this->id = $active["id"];
+        $this->wallet_id = $active["wallet_id"];
+        $this->bot_id = $active["bot_id"];
+        $this->amount = $active["amount"];
+        $this->buy_id = $active["buy_id"];
+        $this->buy_value = $active["buy_value"];
+        $this->buy_price = $active["buy_price"];
+        $this->sell_id = $active["sell_id"];
+        $this->sell_value = $active["sell_value"];
+        $this->sell_price = $active["sell_price"];
+        $this->sold_at = $active["sold_at"];
+        $this->status = $active["status"];
+        $this->created_at = $active["created_at"];
+        $this->updated_at = $active["updated_at"];
     }
 }
