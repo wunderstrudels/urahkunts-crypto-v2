@@ -1,6 +1,5 @@
 <?php
 return function($active, $current) {
-
     $now = new \Carbon\Carbon($current->created_at, 'Europe/Copenhagen');
     $max = $this->current["currency"]->market()->where('created_at', '>=', $active->created_at)->where("created_at", "<=", $now)->max("value");
     if($current->value >= $max) {

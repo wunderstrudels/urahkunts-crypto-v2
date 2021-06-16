@@ -1059,7 +1059,7 @@ class API
         if(isset($json['msg'])){
             // should always output error, not only on httpdebug
             // not outputing errors, hides it from users and ends up with tickets on github
-            echo "signedRequest error: {$output}" . PHP_EOL;
+            //echo "signedRequest error: {$output}" . PHP_EOL;
         }
         $this->transfered += strlen($output);
         $this->requestCount++;

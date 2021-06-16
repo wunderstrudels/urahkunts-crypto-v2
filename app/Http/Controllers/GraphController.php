@@ -6,13 +6,14 @@ use Illuminate\Http\Request;
 use \App\Models\Currency;
 use \App\Models\Wallet;
 use \App\Models\Market;
+use \App\Models\Bot;
 use Carbon\Carbon;
 
 class GraphController extends Controller {
 
     public function __construct() {
         $this->middleware('auth:api', ['except' => [
-
+            "bots"
         ]]);
     }
 
@@ -132,6 +133,23 @@ class GraphController extends Controller {
 
 
     
+    public function bots(Request $request) {
+
+
+        foreach(Bot::all() as $bot) {
+            echo "---------------------------------------- </br>";
+            
+            echo "name: {$bot->name} </br>";
+            echo "status: {$bot->status} </br>";
+
+            $count = sizeof($bot->transactions);
+            echo "transactions: {$count} </br>";
+        }
+
+    
+    }
+
+
     public function highLow(Request $request, $short) {
 
         $currency = Currency::where("short", "=", $short)->first();

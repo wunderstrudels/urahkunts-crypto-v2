@@ -23,7 +23,7 @@ class Bot extends Model {
 
 
     public function active() {
-    	return $this->transactions->where("status", "=", "selling")->first();
+    	return $this->transactions->where("status", "!=", "sold")->first();
     }
     
 
