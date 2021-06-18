@@ -41,13 +41,13 @@
                     annotations: {
                         points: []
                     }
-                }
+                },
+                timer: null,
+                minute: null,
+                last: window.helpers.date()
             };
         },
         computed: {
-            test() {
-                return this.graph;
-            },
             wallets() {
                 return this.$store.getters["wallet/list"];
             }
@@ -62,11 +62,11 @@
                     return false;
                 }
 
+                this.$router.push("/wallets/" + wallet.name);
                 this.active = wallet;
-                this.$router.push("/wallets/" + this.active.name);
+                clearInterval(this.timer);
 
                 (async () => {
-                    this.graph.render = false;
 
                     await this.$store.dispatch("graph/read", {
                         id: this.active.currency_id
@@ -137,53 +137,98 @@
                         this.graph.annotations.points = annotations.points;
                     });
 
-
-
-
-
-
-
                     this.graph.update();
-/* 
-                    console.log("test2");
-                    this.graph.options.annotations.points.push({
-                        x: "21:53:25",
-                        y: "39859.75000000",
-                        marker: {
-                            size: 8,
-                            fillColor: '#fff',
-                            strokeColor: "#00000",
-                            radius: 2,
-                            cssClass: 'apexcharts-custom-class'
-                        },
-                        label: {
-                            borderColor: "#00000",
-                            offsetY: 0,
-                            style: {
-                                color: '#fff',
-                                background: "#00000",
-                            },
-                            text: "buy",
-                        }
-                    }); */
-
-                    this.graph.render = true;
                 })();
 
-                /* this.$store.dispatch("graph/read", {
-                    id: this.active.currency_id
-                }).then((response) => {
-                    this.graph.series = [{
-                        name: "Values",
-                        data: response.graph.values
-                    }];
-                    this.graph.options.labels = response.graph.labels;
+
+                this.timer = (this.timer != null) ? this.timer : setInterval(()=> {
+                    let temp = this.last;
+                    this.last = window.helpers.date();
+
+                    if(temp == null) {
+                        return false;
+                    }
+
                     
 
-                    this.graph.render = true;
-                }); */
+                    (async () => {
+
+                        await this.$store.dispatch("graph/read", {
+                            id: this.active.currency_id,
+                            from: temp
+                        }).then((response) => {
+
+                            for(let item in response.graph.values) {
+                                this.graph.series[0].data.push(response.graph.values[item]);
+                                this.graph.series[0].data.shift();
+                            }
+
+                            for(let item in response.graph.labels) {
+                                this.graph.labels.push(response.graph.labels[item]);
+                                this.graph.labels.shift();
+                            }
+                        });
 
 
+                        await this.$store.dispatch("graph/transactions", {
+                            id: this.active.id
+                        }).then((response) => {
+
+                            let annotations = {};
+                            annotations.points = [];
+                            for(let point in response.transactions.points) {
+                                let item = response.transactions.points[point];
+                                if(item.label == "Buy") {
+                                    annotations.points.push({
+                                        x: item.buy_time,
+                                        y: item.buy_value,
+                                        marker: {
+                                            size: 8,
+                                            fillColor: '#fff',
+                                            strokeColor: item.color,
+                                            radius: 2,
+                                            cssClass: 'apexcharts-custom-class'
+                                        },
+                                        label: {
+                                            borderColor: item.color,
+                                            offsetY: 0,
+                                            style: {
+                                                color: '#fff',
+                                                background: item.color,
+                                            },
+                                            text: item.label,
+                                        }
+                                    });
+                                }else {
+                                    annotations.points.push({
+                                        x: item.sell_time,
+                                        y: item.sell_value,
+                                        marker: {
+                                            size: 8,
+                                            fillColor: '#fff',
+                                            strokeColor: item.color,
+                                            radius: 2,
+                                            cssClass: 'apexcharts-custom-class'
+                                        },
+                                        label: {
+                                            borderColor: item.color,
+                                            offsetY: 0,
+                                            style: {
+                                                color: '#fff',
+                                                background: item.color,
+                                            },
+                                            text: item.label,
+                                        }
+                                    });
+                                }
+                            }
+
+                            this.graph.annotations.points = annotations.points;
+                        });
+
+                        this.graph.update();
+                    })();
+                }, 21000);
             }
         },
         mounted() {

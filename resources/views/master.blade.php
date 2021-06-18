@@ -10,6 +10,10 @@
 
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script src="https://use.fontawesome.com/93cf33b3bf.js"></script>
+        <script src="https://hammerjs.github.io/dist/hammer.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="https://unpkg.com/chartjs-plugin-annotation@1.0.2/dist/chartjs-plugin-annotation.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.0.1/dist/chartjs-plugin-zoom.min.js"></script>
     </head>
     <body>
         <div id="app">

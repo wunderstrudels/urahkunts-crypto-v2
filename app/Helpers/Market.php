@@ -71,7 +71,9 @@ class Market {
             } else {
                 Table::high_low($currency->id)->where("id", "=", $current->id)->update(array(
                     "high" => ($value > $current->high) ? $value : $current->high,
-                    "low" => ($value < $current->low) ? $value : $current->low
+                    "low" => ($value < $current->low) ? $value : $current->low,
+                    "value_difference" => $current->high - $current->low,
+                    "percent_difference" => \Math::percentageFrom($current->high, $current->low)
                 ));
             }
         }

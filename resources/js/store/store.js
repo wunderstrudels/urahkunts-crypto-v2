@@ -8,6 +8,7 @@ import user from './modules/user.js';
 import currency from './modules/currency.js';
 import scenario from './modules/scenario.js';
 import wallet from './modules/wallet.js';
+import bot from './modules/bot.js';
 import graph from './modules/graph.js';
 
 export const store = new Vuex.Store({
@@ -16,6 +17,7 @@ export const store = new Vuex.Store({
 		currency: currency,
 		scenario: scenario,
 		wallet: wallet,
+		bot: bot,
 		graph: graph,
 	},
 	state: {

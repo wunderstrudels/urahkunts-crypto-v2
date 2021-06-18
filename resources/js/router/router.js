@@ -44,6 +44,14 @@ const routes = [
         meta: {
             requiresAuth: false
         }
+    },
+    {
+        path: "/public/:wallet?",
+        name: "public",
+        component: () => import('../components/pages/Public.vue'),
+        meta: {
+            requiresAuth: false
+        }
     }
 ];
 

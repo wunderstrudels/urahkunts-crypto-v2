@@ -29,6 +29,32 @@ export default {
 				});
 			});
 		},
+		wallets(context, data) {
+			return new Promise((resolve, reject) => {
+				axios.get(window.api + '/graph/wallets').then(response => {
+					if(typeof response.data == "undefined") {
+						return false;
+					}
+                    
+					resolve(response.data);
+				}).catch(error => {
+					reject(error);
+				});
+			});
+		},
+		bots(context, data) {
+			return new Promise((resolve, reject) => {
+				axios.get(window.api + '/graph/bots/' + data.id).then(response => {
+					if(typeof response.data == "undefined") {
+						return false;
+					}
+                    
+					resolve(response.data);
+				}).catch(error => {
+					reject(error);
+				});
+			});
+		},
 		transactions(context, data) {
 			return new Promise((resolve, reject) => {
 				axios.get(window.api + '/graph/transactions/' + data.id).then(response => {

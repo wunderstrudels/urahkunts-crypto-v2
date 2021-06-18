@@ -173,10 +173,10 @@ class Broker {
 
 
         $count = $this->current["wallet"]->transactions->where("status", "=", "selling")->count();
-        $usd = $this->current["wallet"]->amount / (sizeof($this->current["wallet"]->bots) - $count);
+        $usd = number_format($this->current["wallet"]->amount / (sizeof($this->current["wallet"]->bots) - $count), 6);
 
-        if($usd < 15) {
-            return "Cannot afford to buy. ${$usd} left in wallet.";
+        if($usd < 10) {
+            return "Cannot afford to buy. $" . $usd . " left in wallet.";
         }
 
         $id = $this->buy($usd, $current->value);
