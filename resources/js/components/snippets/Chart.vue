@@ -2,9 +2,9 @@
     <div class="crypto-chart">
         <div class="overlay">
             <span class="profit">$$$ {{ profits }}</span>
-            <ul>
+            <ul v-show="data.overlay.bots.length != 0">
                 <li v-for="bot in data.overlay.bots" v-bind:key="bot.name">
-                    <strong>{{ bot.name }}:</strong> {{ bot.status }}
+                    <strong v-bind:style="'color: ' + bot.color + ';'">{{ bot.name }}:</strong> {{ bot.status }}
                 </li>
             </ul>
         </div>

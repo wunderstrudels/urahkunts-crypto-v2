@@ -22,7 +22,11 @@
                 chart: {
                     values: [],
                     labels: [],
-                    annotations: {}
+                    annotations: {},
+                    overlay: {
+                        profits: 0,
+                        bots: []
+                    }
                 },
                 updated_at: null,
                 timer: null
@@ -42,7 +46,7 @@
                 }
 
                 this.active = wallet;
-                if(this.$route.params.wallet == undefined) {
+                if(this.$route.params.wallet != this.active.name) {
                     this.$router.push("/public/" + wallet.name);
                 }
 
@@ -82,7 +86,6 @@
                     }).then((response) => {
 
                         if(this.chart.values.length == 0) {
-                            console.log("test");
                             this.chart.values = response.graph.values;
                         }else {
                             for(let item in response.graph.values) {
@@ -92,7 +95,6 @@
                         }
 
                         if(this.chart.labels.length == 0) {
-                            console.log("test");
                             this.chart.labels = response.graph.labels;
                         }else {
                             for(let item in response.graph.labels) {
@@ -154,7 +156,7 @@
                                 type: 'line',
                                 yMin: line.buy_value,
                                 yMax: line.buy_value,
-                                borderColor: 'rgb(255, 99, 132)',
+                                borderColor: line.color,
                                 borderWidth: 2,
                             };
                         }
@@ -187,7 +189,6 @@
 
                 if(this.$route.params.wallet != undefined) {
                     this.wallets.map((item) => {
-                        console.log(item);
                         if(item.name.toLowerCase() == this.$route.params.wallet.toLowerCase()) {
                             this.select(item);
                         }

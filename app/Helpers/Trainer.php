@@ -148,7 +148,7 @@ class Trainer {
             // Bought at
             $timestamp = strtotime($transaction["created_at"]);
             $bought = date('H:i:s', $timestamp);
-            $color = "#000000";
+            $color = "#1cc731";
 
             array_push($points, array(
                 "buy_time" => $bought,

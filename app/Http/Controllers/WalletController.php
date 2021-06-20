@@ -49,6 +49,10 @@ class WalletController extends Controller {
         dd($response); */
 
 
+
+        /* $response = $api->exchangeInfo()["symbols"]["ATOMUSDC"];
+        dd($response); */
+
         return response()->json(array(
             "success" => true
         ));

@@ -9,6 +9,8 @@ return function($current) {
         return "Current value is above daily average.";
     }
 
+    
+
 
     // Max value in 30min.
     $then = new \Carbon\Carbon($current->created_at, 'Europe/Copenhagen');

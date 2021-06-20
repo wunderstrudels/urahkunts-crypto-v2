@@ -77,13 +77,9 @@ class ScenarioController extends Controller {
             ));
         }
         $data = "../scenarios/" . $scenario->name . "/data.json";
-        $buy = "../scenarios/" . $scenario->name . "/buy.php";
-        $sell = "../scenarios/" . $scenario->name . "/sell.php";
 
         return response()->json(array(
-            "graph" => json_decode(file_get_contents($data)),
-            "buy" => file_get_contents($buy),
-            "sell" => file_get_contents($sell)
+            "graph" => json_decode(file_get_contents($data))
         ));
     }
 

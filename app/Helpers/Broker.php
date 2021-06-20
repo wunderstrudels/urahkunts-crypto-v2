@@ -5,6 +5,7 @@ use \App\Models\Transaction;
 use \App\Models\Currency;
 use \App\Models\Market;
 use \App\Models\Wallet;
+use \App\Models\Bot;
 use Carbon\Carbon;
 
 class Broker {
@@ -67,14 +68,39 @@ class Broker {
         if(sizeof($this->wallets) == 0) {
             return false;
         }
-        $split = $avialable / sizeof($this->wallets);
 
 
 
+
+        $bots = 0;
+        foreach(Bot::all() as $bot) {
+            if($bot->transactions->where("status", "=", "selling")->count() != 0) {
+                continue;
+            }
+
+            $bots++;
+        }
+        $bots = ($bots == 0) ? 1 : $bots;
+        $split = $avialable / $bots;
 
         foreach($this->wallets as $wallet) {
             $this->current["wallet"] = $wallet;
-            $this->current["wallet"]->amount = $split;
+
+            $transactions = $wallet->transactions->where("status", "=", "selling")->count();
+            $bots = sizeof($wallet->bots);
+            $total = $bots - $transactions;
+
+            if($total != 0) {
+                $this->current["wallet"]->amount = $split * $total;
+            }else {
+                $this->current["wallet"]->amount = 0;
+            }
+
+
+            if($this->current["wallet"]->id == 4) {
+                $this->current["wallet"]->amount = 11;
+            }
+
             $this->current["currency"] = $wallet->currency;
 
             $this->invest($this->current["wallet"]);
@@ -238,7 +264,15 @@ class Broker {
 
     // BUY FUNCTIONS
     private function buy($amount, $price) {
-        $buy_amount = number_format($amount / $price, 6, '.', '');
+        $p = 6;
+        if($this->current["wallet"]->currency->short == "ATOM") {
+            $p = 3;
+        }
+        if($this->current["wallet"]->currency->short == "BCH") {
+            $p = 4;
+        }
+
+        $buy_amount = number_format($amount / $price, $p, '.', '');
         $buy_price = number_format($price, 8, '.', '');
         $buy_currency = $this->current["wallet"]->currency->name;
 

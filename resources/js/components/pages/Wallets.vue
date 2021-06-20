@@ -16,7 +16,9 @@
 
             <!-- GRAPH -->
             <div v-show="tab == 'graph'" class="tab">
-                <chart v-bind:data.sync="graph"/>
+                <div id="chart" v-if="render">
+                    <chart v-bind:data.sync="chart" />
+                </div>
             </div>
 
             <!-- BOTS -->
@@ -35,16 +37,18 @@
                 tab: "graph",
                 active: null,
                 wallet: null,
-                graph: {
-                    series: [],
+                render: false,
+                chart: {
+                    values: [],
                     labels: [],
-                    annotations: {
-                        points: []
+                    annotations: {},
+                    overlay: {
+                        profits: 0,
+                        bots: []
                     }
                 },
-                timer: null,
-                minute: null,
-                last: window.helpers.date()
+                updated_at: null,
+                timer: null
             };
         },
         computed: {
@@ -57,178 +61,147 @@
                 this.tab = tab;
             },
             selectWallet(wallet) {
-                
+                this.updated_at = null;
+
                 if(this.active != null && wallet.name == this.active.name) {
                     return false;
                 }
 
-                this.$router.push("/wallets/" + wallet.name);
                 this.active = wallet;
-                clearInterval(this.timer);
+                if(this.$route.params.wallet != this.active.name) {
+                    this.$router.push("/wallets/" + wallet.name);
+                }
 
+                this.chart = {
+                    values: [],
+                    labels: [],
+                    annotations: {},
+                    overlay: {
+                        profits: 0,
+                        bots: []
+                    }
+                };
+
+                this.graph(this.active.name, true);
+                this.timer = (this.timer != null) ? this.timer : setInterval(() => {
+                    this.graph(this.active.name, false);
+                }, 21000);
+            },
+            graph(wallet, initial) {
+                if(initial == true) {
+                    this.render = false;
+                }
+
+                let temp = this.updated_at;
+                this.updated_at = window.helpers.date();
+
+                let config =  {id: this.active.currency_id};
+                if(temp != null) {
+                    config.from = temp;
+                }
+
+                
                 (async () => {
-
                     await this.$store.dispatch("graph/read", {
-                        id: this.active.currency_id
-                    }).then((response) => {
-                        this.graph.series = [{
-                            name: "Values",
-                            data: response.graph.values
-                        }];
-                        this.graph.labels = response.graph.labels;
-                    });
-
-
-
-
-                    await this.$store.dispatch("graph/transactions", {
-                        id: this.active.id
+                        id: this.active.currency_id,
+                        from: temp
                     }).then((response) => {
 
-                        let annotations = {};
-                        annotations.points = [];
-                        for(let point in response.transactions.points) {
-                            let item = response.transactions.points[point];
-                            if(item.label == "Buy") {
-                                annotations.points.push({
-                                    x: item.buy_time,
-                                    y: item.buy_value,
-                                    marker: {
-                                        size: 8,
-                                        fillColor: '#fff',
-                                        strokeColor: item.color,
-                                        radius: 2,
-                                        cssClass: 'apexcharts-custom-class'
-                                    },
-                                    label: {
-                                        borderColor: item.color,
-                                        offsetY: 0,
-                                        style: {
-                                            color: '#fff',
-                                            background: item.color,
-                                        },
-                                        text: item.label,
-                                    }
-                                });
-                            }else {
-                                annotations.points.push({
-                                    x: item.sell_time,
-                                    y: item.sell_value,
-                                    marker: {
-                                        size: 8,
-                                        fillColor: '#fff',
-                                        strokeColor: item.color,
-                                        radius: 2,
-                                        cssClass: 'apexcharts-custom-class'
-                                    },
-                                    label: {
-                                        borderColor: item.color,
-                                        offsetY: 0,
-                                        style: {
-                                            color: '#fff',
-                                            background: item.color,
-                                        },
-                                        text: item.label,
-                                    }
-                                });
+                        if(this.chart.values.length == 0) {
+                            this.chart.values = response.graph.values;
+                        }else {
+                            for(let item in response.graph.values) {
+                                this.chart.values.push(response.graph.values[item]);
+                                this.chart.values.shift();
                             }
                         }
 
-                        this.graph.annotations.points = annotations.points;
+                        if(this.chart.labels.length == 0) {
+                            this.chart.labels = response.graph.labels;
+                        }else {
+                            for(let item in response.graph.labels) {
+                                this.chart.labels.push(response.graph.labels[item]);
+                                this.chart.labels.shift();
+                            }
+                        }
+
                     });
 
-                    this.graph.update();
-                })();
-
-
-                this.timer = (this.timer != null) ? this.timer : setInterval(()=> {
-                    let temp = this.last;
-                    this.last = window.helpers.date();
-
-                    if(temp == null) {
-                        return false;
-                    }
-
                     
+                    await this.$store.dispatch("graph/transactions", {
+                        id: this.active.id
+                    }).then((response) => {
+                        this.chart.overlay.profits = response.transactions.profits;
 
-                    (async () => {
 
-                        await this.$store.dispatch("graph/read", {
-                            id: this.active.currency_id,
-                            from: temp
-                        }).then((response) => {
+                        for(let item in response.transactions.points) {
+                            let point = response.transactions.points[item];
 
-                            for(let item in response.graph.values) {
-                                this.graph.series[0].data.push(response.graph.values[item]);
-                                this.graph.series[0].data.shift();
+
+                            if(point.label == "Buy") {
+                                this.chart.annotations["buy-" + item] = {
+                                    type: 'point',
+                                    xValue: point.buy_time,
+                                    yValue: point.buy_value,
+                                    backgroundColor: point.color,
+                                    borderColor: "black",
+                                    borderWidth: 1,
+                                    radius: 6
+                                };
+                            }else {
+                                this.chart.annotations["sold-" + item] = {
+                                    type: 'point',
+                                    xValue: point.sell_time,
+                                    yValue: point.sell_value,
+                                    backgroundColor: point.color,
+                                    borderColor: "black",
+                                    borderWidth: 1,
+                                    radius: 6
+                                };
+                                this.chart.annotations["soldd-" + item] = {
+                                    type: 'point',
+                                    xValue: point.sell_time,
+                                    yValue: point.sell_value,
+                                    backgroundColor: "black",
+                                    borderColor: "black",
+                                    borderWidth: 1,
+                                    radius: 2
+                                };
                             }
-
-                            for(let item in response.graph.labels) {
-                                this.graph.labels.push(response.graph.labels[item]);
-                                this.graph.labels.shift();
-                            }
-                        });
+                        }
 
 
-                        await this.$store.dispatch("graph/transactions", {
-                            id: this.active.id
-                        }).then((response) => {
+                        for(let item in response.transactions.lines) {
+                            let line = response.transactions.lines[item];
 
-                            let annotations = {};
-                            annotations.points = [];
-                            for(let point in response.transactions.points) {
-                                let item = response.transactions.points[point];
-                                if(item.label == "Buy") {
-                                    annotations.points.push({
-                                        x: item.buy_time,
-                                        y: item.buy_value,
-                                        marker: {
-                                            size: 8,
-                                            fillColor: '#fff',
-                                            strokeColor: item.color,
-                                            radius: 2,
-                                            cssClass: 'apexcharts-custom-class'
-                                        },
-                                        label: {
-                                            borderColor: item.color,
-                                            offsetY: 0,
-                                            style: {
-                                                color: '#fff',
-                                                background: item.color,
-                                            },
-                                            text: item.label,
-                                        }
-                                    });
-                                }else {
-                                    annotations.points.push({
-                                        x: item.sell_time,
-                                        y: item.sell_value,
-                                        marker: {
-                                            size: 8,
-                                            fillColor: '#fff',
-                                            strokeColor: item.color,
-                                            radius: 2,
-                                            cssClass: 'apexcharts-custom-class'
-                                        },
-                                        label: {
-                                            borderColor: item.color,
-                                            offsetY: 0,
-                                            style: {
-                                                color: '#fff',
-                                                background: item.color,
-                                            },
-                                            text: item.label,
-                                        }
-                                    });
-                                }
-                            }
+                            this.chart.annotations["buy-line-" + item] = {
+                                type: 'line',
+                                yMin: line.buy_value,
+                                yMax: line.buy_value,
+                                borderColor: line.color,
+                                borderWidth: 2,
+                            };
+                        }
+                    });
 
-                            this.graph.annotations.points = annotations.points;
-                        });
 
-                        this.graph.update();
-                    })();
-                }, 21000);
+
+
+                    await this.$store.dispatch("graph/bots", {
+                        id: this.active.name,
+                    }).then((response) => {
+                        this.chart.overlay.bots = response;
+                    });
+
+
+
+
+                    if(initial == true) {
+                        this.render = true;
+                    }else {
+                        this.chart.update();
+                    }
+                })();
             }
         },
         mounted() {
