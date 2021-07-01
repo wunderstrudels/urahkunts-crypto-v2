@@ -103,6 +103,29 @@
                             }
                         }
 
+                        this.chart.annotations["daily-line"] = {
+                            type: 'line',
+                            yMin: response.graph.daily,
+                            yMax: response.graph.daily,
+                            borderColor: "rgba(0, 0, 0, 0.2)",
+                            borderWidth: 2,
+                        };
+
+                        this.chart.annotations["weekly-line"] = {
+                            type: 'line',
+                            yMin: response.graph.weekly,
+                            yMax: response.graph.weekly,
+                            borderColor: "rgba(0, 255, 0, 0.2)",
+                            borderWidth: 2,
+                        };
+
+                        this.chart.annotations["monthly-line"] = {
+                            type: 'line',
+                            yMin: response.graph.monthly,
+                            yMax: response.graph.monthly,
+                            borderColor: "rgba(255, 0, 0, 0.2)",
+                            borderWidth: 2,
+                        };
                     });
 
                     
@@ -110,6 +133,7 @@
                         id: this.active.id
                     }).then((response) => {
                         this.chart.overlay.profits = response.transactions.profits;
+                        this.chart.overlay.daily_profit = response.transactions.daily_profit;
 
 
                         for(let item in response.transactions.points) {

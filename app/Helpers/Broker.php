@@ -28,6 +28,14 @@ class Broker {
     public function __construct() {
         $this->binance = new \Binance\API(env("API_X_KEY"), env("API_X_SECRET"));
 
+        
+        $btc = Currency::where("short", "=", "btc")->first();
+        /*
+        $temp1 = $btc->market()->where('created_at', '>=', Carbon::parse('-60 minutes'))->avg("percent_difference");
+        $temp2 = $btc->market()->where('created_at', '>=', Carbon::parse('-60 minutes'))->sum("percent_difference");
+        $temp3 = $btc->market()->where('created_at', '>=', Carbon::parse('-60 minutes'))->sum("value_difference");
+        Log::debug("Avg: {$temp1}         Sum: {$temp2}        Sum value: {$temp3}");
+        */
 
         $this->account = $this->binance->account();
         $this->commissions["taker"] = $this->account["takerCommission"] / 10000;
@@ -91,14 +99,14 @@ class Broker {
             $total = $bots - $transactions;
 
             if($total != 0) {
-                $this->current["wallet"]->amount = $split * $total;
+                $this->current["wallet"]->amount = number_format(($split * $total) - 0.5, 4);
             }else {
                 $this->current["wallet"]->amount = 0;
             }
 
 
             if($this->current["wallet"]->id == 4) {
-                $this->current["wallet"]->amount = 11;
+                //$this->current["wallet"]->amount = 11;
             }
 
             $this->current["currency"] = $wallet->currency;
@@ -119,30 +127,35 @@ class Broker {
                 continue;
             }
 
-            $last = ($i != 0) ? $wallet->bots[$i - 1] : null;
-            if($last == null) {
+            if($this->current["bot"]->active() != null) {
                 $this->run();
             }else {
-                $active = $last->active();
-
-                if($active == null) {
-                    $this->current["bot"]->status = "Last scenario havent bought yet.";
+                $last = ($i != 0) ? $wallet->bots[$i - 1] : null;
+                if($last == null) {
+                    $this->run();
                 }else {
-                    $time = (isset($wallet->timeout) != false) ? $wallet->timeout : 30;
-                    if(Carbon::parse($active->created_at)->diffInMinutes(Carbon::now()) < $time) {
-                        $time = $time - Carbon::parse($active->created_at)->diffInMinutes(Carbon::now());
-                        $this->current["bot"]->status = "Waiting " . $time . " minutes to buy.";
+                    $last_active = $last->active();
+
+                    if($last_active == null) {
+                        $this->current["bot"]->status = "Last scenario havent bought yet.";
                     }else {
-                        $this->run();
+                        $time = (isset($wallet->timeout) != false) ? $wallet->timeout : 30;
+                        if(Carbon::parse($last_active->created_at)->diffInMinutes(Carbon::now()) < $time) {
+                            $time = $time - Carbon::parse($last_active->created_at)->diffInMinutes(Carbon::now());
+                            $this->current["bot"]->status = "Waiting " . $time . " minutes to buy.";
+                        }else {
+                            $this->run();
+                        }
                     }
                 }
             }
+
+            
             $this->current["bot"]->save();
         }
     }
 
     private function run() {
-
         $current = $this->current["wallet"]->currency->market()->latest()->first();
         $active = $this->current["bot"]->active();
         $status = "";
@@ -275,10 +288,14 @@ class Broker {
         $buy_amount = number_format($amount / $price, $p, '.', '');
         $buy_price = number_format($price, 8, '.', '');
         $buy_currency = $this->current["wallet"]->currency->name;
+        $test = $price - ($price * 0.001);
 
         $response = $this->binance->buy($buy_currency, $buy_amount, $buy_price);
 
         if($response == null || isset($response["orderId"]) == false) {
+            Log::debug("Buy: " . $this->current["bot"]->name);
+            Log::debug("Amount: {$buy_amount}  Price: {$buy_price}");
+            Log::debug($response);
             return null;
         }
 
@@ -326,6 +343,8 @@ class Broker {
 
         $response = $this->binance->sell($sell_currency, $sell_amount, $sell_price);
         if($response == null || isset($response["orderId"]) == false) {
+            Log::debug("Sell: " . $this->current["bot"]->name);
+            Log::debug($response);
             return null;
         }
 
@@ -383,6 +402,7 @@ class Broker {
         }else if($active->status == "confirm_sell") {
             $active->sell_id = null;
             $active->status = "selling";
+            $active->sold_at = null;
             $active->save();
         }
 

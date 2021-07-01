@@ -25,7 +25,8 @@ class GraphController extends Controller {
     public function read(Request $request, $id) {
         $output = array(
             "labels" => array(),
-            "values" => array()
+            "values" => array(),
+            "daily" => 0
         );
 
 
@@ -34,9 +35,12 @@ class GraphController extends Controller {
         if($currency == null) {
             return response()->json(array("error" => "Could not find currency: " . $id), 404);
         }
+        $output["daily"] = $currency->market()->where("saved", "=", true)->where('created_at', '>=', Carbon::parse('-1440 minutes'))->avg("value");
+        $output["weekly"] = $currency->market()->where("saved", "=", true)->where('created_at', '>=', Carbon::parse('-7 days'))->avg("value");
+        $output["monthly"] = $currency->market()->where("saved", "=", true)->where('created_at', '>=', Carbon::parse('-30 days'))->avg("value");
 
         if(isset($request->from) == false && isset($request->to) == false) {
-            $market = $currency->market()->where("saved", "=", true)->where('created_at', '>=', Carbon::parse('-1440 minutes'))->where('created_at', '<=', Carbon::parse('-30 minutes'))->get();
+            $market = $currency->market()->where("saved", "=", true)->where('created_at', '>=', Carbon::parse('-1440 minutes'))->get();
             foreach($market as $item) {
                 
                 array_push($output["values"], $item->value);
@@ -44,17 +48,6 @@ class GraphController extends Controller {
                 // Labels
                 $timestamp = strtotime($item->created_at);
                 $time = date('H:i', $timestamp);
-                array_push($output["labels"], $time);
-            }
-
-            $market = $currency->market()->where('created_at', '>=', Carbon::parse('-30 minutes'))->get();
-            foreach($market as $item) {
-                
-                array_push($output["values"], $item->value);
-
-                // Labels
-                $timestamp = strtotime($item->created_at);
-                $time = date('H:i:s', $timestamp);
                 array_push($output["labels"], $time);
             }
         }
@@ -67,7 +60,7 @@ class GraphController extends Controller {
 
                 // Labels
                 $timestamp = strtotime($item->created_at);
-                $time = date('H:i:s', $timestamp);
+                $time = date('H:i', $timestamp);
                 array_push($output["labels"], $time);
             }
         }
@@ -116,6 +109,7 @@ class GraphController extends Controller {
 
         $output = array(
             "profits" => 0,
+            "daily_profit" => 0,
             "points" => array(),
             "lines" => array()
         );
@@ -125,7 +119,7 @@ class GraphController extends Controller {
         foreach($wallet->bots as $bot) {
             $color = $bot->color;
 
-            foreach($bot->transactions->where('created_at', '>=', Carbon::parse('-1440 minutes'))->where('created_at', '<=', Carbon::parse('-30 minutes')) as $transaction) {
+            foreach($bot->transactions->where('created_at', '>=', Carbon::parse('-1440 minutes')) as $transaction) {
                 // Bought at
                 $timestamp = strtotime($transaction->created_at);
                 $bought = date('H:i', $timestamp);
@@ -150,26 +144,15 @@ class GraphController extends Controller {
                         "color" => $color
                     ));
 
-                    $output["profits"] = $output["profits"] + $transaction->sell_price - $transaction->buy_price;
+                    $output["daily_profit"] = $output["daily_profit"] + $transaction->sell_price - $transaction->buy_price;
                 }
             }
 
-            foreach($bot->transactions->where('created_at', '>=', Carbon::parse('-30 minutes')) as $transaction) {
-                // Bought at
-                $timestamp = strtotime($transaction->created_at);
-                $bought = date('H:i', $timestamp);
-
-                array_push($points, array(
-                    "buy_time" => $bought,
-                    "buy_value" => $transaction->buy_value,
-                    "label" => "Buy",
-                    "color" => $color
-                ));
-
+            foreach($bot->transactions->where('created_at', '<=', Carbon::parse('-1440 minutes'))->where('sold_at', '>=', Carbon::parse('-1440 minutes')) as $transaction) {
                 if($transaction->status == "sold") {
                     // Sold at
                     $timestamp = strtotime($transaction->sold_at);
-                    $sold = date('H:i:s', $timestamp);
+                    $sold = date('H:i', $timestamp);
 
                     array_push($points, array(
                         "sell_time" => $sold,
@@ -178,12 +161,18 @@ class GraphController extends Controller {
                         "color" => $color
                     ));
 
-                    $output["profits"] = $output["profits"] + $transaction->sell_price - $transaction->buy_price;
+                    $output["daily_profit"] = $output["daily_profit"] + $transaction->sell_price - $transaction->buy_price;
                 }
             }
         }
         $output["points"] = $points;
+
+        $total_buy = $wallet->transactions->where("status", "=", "sold")->sum("buy_price");
+        $total_sell = $wallet->transactions->where("status", "=", "sold")->sum("sell_price");
+        $output["profits"] = $total_sell - $total_buy;
         $output["profits"] = number_format($output["profits"], 2);
+        $output["daily_profit"] = number_format($output["daily_profit"], 2);
+
 
         foreach($wallet->transactions->where("status", "=", "selling")->where('created_at', '<=', Carbon::parse('-1440 minutes')) as $transaction) {
             // Bought at
@@ -206,6 +195,9 @@ class GraphController extends Controller {
     public function bots(Request $request, $id) {
         $wallet = Wallet::where("id", "=", $id)->orWhere("name", "=", $id)->first();
 
+        if($wallet == null) {
+            return response()->json(array("error" => "Could not find wallet: " . $id), 404);
+        }
 
         return response()->json($wallet->bots()->select("name", "status", "color")->get(), 200);
     }

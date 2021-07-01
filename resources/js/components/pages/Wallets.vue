@@ -132,6 +132,7 @@
                         id: this.active.id
                     }).then((response) => {
                         this.chart.overlay.profits = response.transactions.profits;
+                        this.chart.overlay.daily_profit = response.transactions.daily_profit;
 
 
                         for(let item in response.transactions.points) {

@@ -2,6 +2,7 @@
     <div class="crypto-chart">
         <div class="overlay">
             <span class="profit">$$$ {{ profits }}</span>
+            <span class="daily_profit">Today: {{ daily_profit }}$</span>
             <ul v-show="data.overlay.bots.length != 0">
                 <li v-for="bot in data.overlay.bots" v-bind:key="bot.name">
                     <strong v-bind:style="'color: ' + bot.color + ';'">{{ bot.name }}:</strong> {{ bot.status }}
@@ -27,6 +28,9 @@
         computed: {
             profits() {
                 return (this.data.overlay.profits != undefined) ? this.data.overlay.profits : 0;
+            },
+            daily_profit() {
+                return (this.data.overlay.daily_profit != undefined) ? this.data.overlay.daily_profit : 0;
             }
         },
         methods: {
@@ -118,6 +122,18 @@
 
         font-size: 50px;
         font-weight: bold;
+    }
+
+    .overlay > .daily_profit {
+        position: relative;
+        float: left;
+        width: 100%;
+        height: 20px;
+        line-height: 20px;
+
+        font-size: 20px;
+        font-weight: bold;
+        margin-top: 10px;
     }
 
     .overlay > ul {

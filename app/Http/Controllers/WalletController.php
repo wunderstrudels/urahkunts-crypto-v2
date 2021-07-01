@@ -50,7 +50,8 @@ class WalletController extends Controller {
 
 
 
-        /* $response = $api->exchangeInfo()["symbols"]["ATOMUSDC"];
+        //$response = $api->exchangeInfo()["symbols"]["ANKRBNB"];
+        /* $response = number_format($api->price("ANKRUSDT"), 8, '.', '');
         dd($response); */
 
         return response()->json(array(
